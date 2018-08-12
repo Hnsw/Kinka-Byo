@@ -1,0 +1,12 @@
+language: rust
+notifications:
+  irc: "irc.mozilla.org#piston-internals"
+os:
+  - linux
+  - osx
+before_install: # For OS X until addons support `brew`
+ - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then brew update; fi"
+ - "if [ ${TRAVIS_OS_NAME} = 'osx' ]; then brew install freetype ; fi"
+script:
+  - cd ./getting-started
+  - cargo build -v
