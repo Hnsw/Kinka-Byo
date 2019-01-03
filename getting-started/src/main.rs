@@ -28,22 +28,23 @@ impl App {
     fn render(&mut self, args: &RenderArgs) {
         use graphics::*;
 
-        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+//        const GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
         const RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
         const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
-        let square = rectangle::square(0.0, 0.0, 50.0);
+//        let square = rectangle::square(0.0, 0.0, 50.0);
+        let square = rectangle::rectangle_by_corners(0.0, 0.0, 50.0, 25.0);
         let rotation = self.rotation;
         let position = self.position;
         let movement = self.movement;
-        let (x, y) = ((args.width / 2) as f64,
-                      (args.height / 2) as f64);
+//        let (x, y) = ((args.width / 2) as f64,
+//                      (args.height / 2) as f64);
 
         self.gl.draw(args.viewport(), |c, gl| {
             // Clear the screen.
-            clear( WHITE, gl);
+            clear(WHITE, gl);
 
-            let transform = c.transform.trans(movement, movement).scale(position, -position).rot_rad(rotation).trans(-25.0, -25.0);
+            let transform = c.transform.trans(movement, movement).scale(position, -position).rot_rad(rotation + 0.5 * PI).trans(-25.0, -12.5);
 
             // Draw a box rotating around the middle of the screen.
             rectangle(RED, square, transform, gl);
@@ -52,16 +53,21 @@ impl App {
 
     fn update(&mut self, args: &UpdateArgs) {
         // Rotate 2 radians per second.
-        // self.rotation += 1.0 * args.dt;
-        if self.rotation_target > self.rotation {
-            self.rotation += 2.0 * args.dt;
-        } else if self.rotation_target < self.rotation {
-            self.rotation -= 2.0 * args.dt;
+        let mut direction: f64 = (self.rotation_target - self.rotation).signum();
+        if (self.rotation_target - self.rotation).abs() > PI {
+            direction *= -1.0;
         }
-        //self.movement += 10.0 * args.dt;
+        self.rotation += 2.0 * direction * args.dt;
+
+        if self.rotation > PI {
+            self.rotation -= 2.0 * PI;
+        } else if self.rotation < -PI {
+            self.rotation += 2.0 * PI;
+        }
+
         if (self.position < 0.8) & (self.growing == true) {
             self.position += 2.0 * args.dt;
-        } else if self.position < 0.2 {
+        } else if self.position < 0.4 {
             self.growing = true;
         } else {
             self.growing = false;
@@ -71,7 +77,7 @@ impl App {
             self.movement -= 20.0 * args.dt;
         }
         if self.down_pressed == true {
-            self.rotation -= 2.0 * args.dt;
+            self.movement += 20.0 * args.dt;
         }
     }
 
@@ -103,21 +109,11 @@ impl App {
     }
 
     fn handle_cursor_input(&mut self, position: &[f64; 2]) {
-        let x: &f64 = &position[0];
-        let y: f64 = position[1];
-        let deg180: f64 = 180.00;
-       // self.rotation_target = ((x - 100.00) / (y - 100.00)).atan() * (deg180 / PI);
-        //self.rotation_target = (x/y).atan() * (deg180 / PI);
-         self.rotation_target = (-(x - 100.00) / (y - 100.00)).atan();
-        if self.rotation_target < self.rotation
-            && self.rotation - self.rotation_target > self.rotation_target + 2.0 * PI - self.rotation {
-            self.rotation_target += 2.0 * PI;
-        }
-        if self.rotation_target > self.rotation
-            && self.rotation_target - self.rotation > self.rotation + 2.0 * PI - self.rotation_target {
-            self.rotation_target -= 2.0 * PI;
-        }
-        println!("{}", self.rotation_target);
+        let x: f64 = &position[0] - &self.movement;
+        let y: f64 = &position[1] - &self.movement;
+        self.rotation_target =x.atan2(y);
+
+        //println!("x: {}, y: {}, rot_tar: {}, rot: {}", x, y, self.rotation_target, self.rotation);
     }
 }
 
